@@ -16,6 +16,6 @@ pip3 install -r requirement.txt
 ### RUN
 
 ```sh
-python main.py
+python main.py -n 100
 ```
 
