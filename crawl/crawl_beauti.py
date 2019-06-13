@@ -15,17 +15,23 @@ from bs4 import BeautifulSoup
 INDEX_LINK = 'https://www.ptt.cc'
 HOME_LINK = INDEX_LINK + '/bbs/Beauty/index.html'
 MONTH_DICT = dict((v,k) for k,v in enumerate(calendar.month_abbr))
+f = open('human_validation.html','w')
 
 
 def is_active_image_link(link):
 	res = []
-	ret = urllib.request.urlopen(link)
-	if ret.status == 200:
-		image = Image.open(ret)
-		res.append(image)
-		return True, res
-	else:
-		return False
+	try :
+		ret = urllib.request.urlopen(link)
+		if ret.status == 200:
+			message = '<img src="' + link + '" style="width: 25%"/>'
+			f.write(message)
+			#image = Image.open(ret)
+			#res.append(image)
+			return True
+		else:
+			return False
+	except:
+		pass
 	return False
 
 def process_each_comment(raw_comment):
@@ -60,14 +66,12 @@ def get_content_from_main_content(main_content):
 		if any(c.startswith(begins) for begins in URL_BEGINS):
 			if not any(c.endswith(extension) for extension in IMG_EXTENSIONS):
 				c += '.jpg'
-			is_active, im = is_active_image_link(c)
+			is_active = is_active_image_link(c)
 			if is_active:
 				link.append(c)
-			if im:
-				image.append(im)
 		else:
 			content.append(c)
-	return content, link, image
+	return content, link
 
 def get_comments_from_soup(soup):
 	comments = {'Upvote':[], 'Neutral': [], 'Downvote': []}
@@ -109,15 +113,16 @@ def process_each_article(title, url):
 	main_content = soup.select('div#main-content.bbs-screen.bbs-content')[0].text.split("※ 發信站: 批踢踢實業坊(ptt.cc)")[0]
 
 	article['Date'] = get_date_from_main_content(main_content)
-	article['Content'], article['Link'], article['Image'] = get_content_from_main_content(main_content)
+	article['Content'], article['Link'] = get_content_from_main_content(main_content)
 	article['Comment'] = get_comments_from_soup(soup)
 	#article['Comment_Process'] = process_comment(article['Comment'])
 
-	embed()
+	#embed()
 
 	return article
 
 def do_crawling(nums_pages_crawling):
+	f.write('<html><head></head><body>')
 	url = HOME_LINK
 	DOC = {}
 	for n in tqdm(range(nums_pages_crawling)):
@@ -133,7 +138,8 @@ def do_crawling(nums_pages_crawling):
 
 		nextPage = soup.select('div.btn-group-paging a')
 		url = INDEX_LINK + nextPage[1]['href']
-
+	f.write('</body></html>')
+	f.close()
 	return DOC
 
 def getDOC(nums_pages_crawling=1):
