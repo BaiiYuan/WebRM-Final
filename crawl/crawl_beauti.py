@@ -4,6 +4,7 @@ import requests
 import calendar
 import urllib
 import jieba
+import re
 
 from PIL import Image
 from time import time
@@ -31,8 +32,10 @@ def process_each_comment(raw_comment):
 	URL_BEGINS = ['http', 'https']
 	result = []
 	raw_comment = raw_comment.replace('\n','')
+	raw_comment = re.sub(r'(?:\d{1,3}\.){3}\d{1,3}', '', raw_comment)
 	raw_comment = raw_comment.split(':', 1)
-	raw_comment[1] = raw_comment[1].split()[:-3]
+	raw_comment[1] = raw_comment[1].split()[:-2]
+	#raw_comment[1][-1] = re.sub(r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b', '', raw_comment[1][-1])
 	for w in raw_comment[1]:
 		if any(w.startswith(begins) for begins in URL_BEGINS):
 			return [w]
