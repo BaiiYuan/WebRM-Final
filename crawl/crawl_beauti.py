@@ -62,7 +62,7 @@ def get_content_from_main_content(main_content):
 	IMG_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm', '.tif']
 	URL_BEGINS = ['http', 'https']
 	for c in main_content:
-		print(c)
+		#print(c)
 		if any(c.startswith(begins) for begins in URL_BEGINS):
 			if not any(c.endswith(extension) for extension in IMG_EXTENSIONS):
 				c += '.jpg'
@@ -106,7 +106,7 @@ def process_comment(comment):
 def process_each_article(title, url):
 	article = {}
 	article['Title'] = title
-	print(title)
+	#print(title)
 
 	res = requests.get(url)
 	soup = BeautifulSoup(res.text, 'html.parser')
