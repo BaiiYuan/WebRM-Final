@@ -7,7 +7,9 @@ import json
 def main(args):
 
     inverted_file = dict()
-    with open('saved/DOC_470.pkl', "rb") as f:
+
+
+    with open('saved/DOC1500.pkl', "rb") as f:
         DOC = pickle.load(f)
 
     # load_stop_words
@@ -23,19 +25,24 @@ def main(args):
     for doc_id, article in DOC.items():
         terms = list()
 
+#   include title in inverted file
+#        title = list(jieba.cut(article['Title']))
+#        for term in title:
+#            if term not in stop_words and term != " ":
+#                terms.append(term)
 
-        title = list(jieba.cut(article['Title']))
-        for term in title:
-            if term not in stop_words and term != " ":
-                terms.append(term)
+#   include title in inverted file
+ #       for content in article['Content']:
+ #           content = list(jieba.cut(content))
+ #           for term in content:
+ #               if term not in stop_words:
+ #                   terms.append(term)
 
-
-        for content in article['Content']:
-            content = list(jieba.cut(content))
-            for term in content:
-                if term not in stop_words:
+#   include title in inverted file
+        for line in article['Comment']['Neutral']:
+            for term in line:
+                if term not in stop_words and term != " " and not term.startswith('http'):
                     terms.append(term)
-
 
         term_cnt = Counter()
         term_cnt.update(terms)
@@ -51,7 +58,7 @@ def main(args):
                 inverted_file[term]['docs'][doc_id] = count
 
     print(len(inverted_file))
-    with open('inverted_file_470.json', 'w', encoding='utf-8') as file:
+    with open('inverted_file_1500_neutral.json', 'w', encoding='utf-8') as file:
         json.dump(inverted_file, file, ensure_ascii=False)
 
 
