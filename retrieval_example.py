@@ -161,18 +161,20 @@ for (query_id, query) in querys:
         print ("<!DOCTYPE html>")
         print ("<html>")
         print ("<body>")
-        cnt = 0
-        for i in final_ans:
-            for j in i:
-                res = requests.get(j)
+        
+        for doc in final_ans:
+            for url in doc:
+                res = requests.get(url)
                 soup = BeautifulSoup(res.text,'html.parser')
                 main_content = soup.select('div#main-content.bbs-screen.bbs-content')[0].text.split("※ 發信站: 批踢踢實業坊(ptt.cc)")[0]
                 content,pictures = get_content_from_main_content(main_content)
+                print ('<a href='+url+'>url</a>')
+                cnt = 1
                 for pic in pictures:
                     print ("<img src="+pic+">")
-                cnt += 1
-                if cnt >3:
-                    break
+                    if cnt == 3:
+                        break
+                    cnt += 1
         print ("</body>")
         print ("</html>")
 
