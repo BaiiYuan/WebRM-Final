@@ -168,7 +168,7 @@ for (query_id, query) in querys:
                 soup = BeautifulSoup(res.text,'html.parser')
                 main_content = soup.select('div#main-content.bbs-screen.bbs-content')[0].text.split("※ 發信站: 批踢踢實業坊(ptt.cc)")[0]
                 content,pictures = get_content_from_main_content(main_content)
-                print ('<a href='+url+'>url</a>')
+                print ('<a href="'+url+'">url</a>')
                 cnt = 1
                 for pic in pictures:
                     print ("<img src="+pic+">")
