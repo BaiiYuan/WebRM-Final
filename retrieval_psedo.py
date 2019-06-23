@@ -118,12 +118,17 @@ for (query_id, query) in querys:
 	# sort the document score pair by the score
         sorted_document_scores = sorted(document_scores.items(), key=operator.itemgetter(1), reverse=True)
         #feedback
-        '''
-        for i in range(3):
-            doc_id = sorted_document_scores[i][0]
-            doc_words = list(jieba.cut(raw_file[id_url_dic[doc_id]]))
-            query_cnt.update(doc_words)
         
+        for i in range(3):
+            doc = sorted_document_scores[i][0]
+            res = requests.get(url_base+doc)
+            soup = BeautifulSoup(res.text, 'html.parser')
+            main_content = soup.select('div#main-content.bbs-screen.bbs-content')[0].text.split("※ 發信站: 批踢踢實業坊(ptt.cc)")[0]
+            contents, link = get_content_from_main_content(main_content)
+            for content in contents:
+                doc_words = list(jieba.cut(content))
+                query_cnt.update(doc_words)
+
         document_scores2 = dict()
         for (word, count) in query_cnt.items():
                 if word in invert_file:
@@ -133,6 +138,8 @@ for (query_id, query) in querys:
                         for document_count_dict in invert_file[word]['docs']:
                                 #for doc, doc_tf in document_count_dict.items():
                                         #dl = doc_len_dic[id_url_dic[doc]]
+                                        doc = document_count_dict
+                                        doc_tf = invert_file[word]['docs'][doc]
                                         dl = 1
                                         if doc in document_scores2:
                                                 #document_scores[doc] += query_tf * idf * doc_tf * idf
@@ -150,7 +157,8 @@ for (query_id, query) in querys:
             if i in document_scores2:
                 document_scores[i] = alpha*document_scores[i] + (1-alpha)*document_scores2[i]
         sorted_document_scores = sorted(document_scores.items(), key=operator.itemgetter(1), reverse=True)
-        '''
+        
+        
         # record the answer of this query to final_ans
         
         final_ans.append([url_base+doc_score_tuple[0] for doc_score_tuple in sorted_document_scores[:]])

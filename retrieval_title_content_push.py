@@ -19,10 +19,12 @@ from crawl.crawl_beauti import get_content_from_main_content
 import webbrowser
 
 parser = ArgumentParser()
-parser.add_argument("-i", "--inverted_file", default='inverted_file.json', dest = "inverted_file", help = "Pass in a .json file.")
-#parser.add_argument("-q", "--query_file", default='QS_1.csv', dest = "query_file", help = "Pass in a .csv file.")
-#parser.add_argument("-c", "--corpus_file", default='NC_1.csv', dest = "corpus_file", help = "Pass in a .csv file.")
-parser.add_argument("-o", "--output_file", default='sample_output.csv', dest = "output_file", help = "Pass in a .csv file.")
+parser.add_argument("-t", default='inverted_file_1500_title.json', dest = "title_inverted_file", help = "Pass in a .json file.")
+parser.add_argument("-c", default='inverted_file_1500_content.json', dest = "content_inverted_file", help = "Pass in a .json file.")
+parser.add_argument("-p", default='inverted_file_1500_upvote.json', dest = "push_inverted_file", help = "Pass in a .json file.")
+parser.add_argument("-a", default=0.85, dest = "alpha", help = "Pass in a value [0-1]")
+parser.add_argument("-b", default=0.1, dest = "beta", help = "Pass in a value < 1-alpha.")
+#parser.add_argument("-o", "--output_file", default='sample_output.csv', dest = "output_file", help = "Pass in a .csv file.")
 #parser.add_argument("-r", "--raw_file",default='url2content.json', dest = 'raw_file',help = "Pass in a .json file.")
 
 
@@ -31,8 +33,19 @@ url_base = 'https://www.ptt.cc'
 args = parser.parse_args()
 
 # load inverted file
-with open(args.inverted_file) as f:
-	invert_file = json.load(f)
+with open(args.title_inverted_file) as f:
+	title_invert_file = json.load(f)
+with open(args.content_inverted_file) as f:
+	content_invert_file = json.load(f)
+with open(args.push_inverted_file) as f:
+	push_invert_file = json.load(f)
+
+
+alpha = args.alpha   #weight of title
+beta = args.beta #weight of content
+gamma = 1 - alpha - beta
+
+
 #load raw data
 #with open(args.raw_file) as f:
 #        raw_file = json.load(f)
@@ -60,8 +73,8 @@ print ("total len: ",doc_total_len)
 #    id_url_dic[corpus[i][0]] = corpus[i][1]
 
 all_docs = dict()
-for word in invert_file:
-    for doc in invert_file[word]['docs']:
+for word in title_invert_file:
+    for doc in title_invert_file[word]['docs']:
         if doc in all_docs:
             all_docs[doc] += 1
         else:
@@ -69,12 +82,33 @@ for word in invert_file:
 
 N = (len(all_docs))
 
+all_docs_content = dict()
+for word in content_invert_file:
+    for doc in content_invert_file[word]['docs']:
+        if doc in all_docs_content:
+            all_docs_content[doc] += 1
+        else:
+            all_docs_content[doc] = 1
+
+N_content = len(all_docs_content)
+
+
+all_docs_push = dict()
+for word in push_invert_file:
+    for doc in push_invert_file[word]['docs']:
+        if doc in all_docs_push:
+            all_docs_push[doc] += 1
+        else:
+            all_docs_push[doc] = 1
+
+N_push = len(all_docs_push)
 
 print('Enter your query: ',file=sys.stderr)
 querys = input()
 querys = [('1',querys)]
 
 doc_averge_len = 1
+
 
 
 # process each query
@@ -87,21 +121,24 @@ for (query_id, query) in querys:
         query_cnt.update(query_words)
         
         # calculate scores by tf-idf
-        document_scores = dict() # record candidate document and its scores
+        document_scores = dict() # record candidate document and its scores with title
+        document_scores_content = dict() # record candidate document and its scores with content inverted file
+        document_scores_push = dict()
+
         #parameter
         k1 = 1.2
         b = 0.75
         k3 = 100
         #N = num_corpus
         for (word, count) in query_cnt.items():
-                if word in invert_file:
+                if word in title_invert_file:
                         query_tf = count
-                        idf = invert_file[word]['idf']
+                        idf = title_invert_file[word]['idf']
                         idf = N/idf
-                        for document_count_dict in invert_file[word]['docs']:
+                        for document_count_dict in title_invert_file[word]['docs']:
                                 #for doc, doc_tf in document_count_dict.items():
                                         doc = document_count_dict
-                                        doc_tf = invert_file[word]['docs'][doc] 
+                                        doc_tf = title_invert_file[word]['docs'][doc] 
                                         #dl = doc_len_dic[id_url_dic[doc]]
                                         dl = 1
                                         if doc in document_scores:
@@ -114,8 +151,57 @@ for (query_id, query) in querys:
                                                 document_scores[doc] = math.log((N-idf+0.5)/(idf+0.5))*\
                                                         (((k1+1)*doc_tf)/((k1*(1-b+b*(dl/doc_averge_len)))+doc_tf))*\
                                                         (((k3+1)*query_tf)/(k3+query_tf))
+                if word in content_invert_file:
+                        query_tf = count
+                        idf = content_invert_file[word]['idf']
+                        idf = N_content/idf
+                        for document_count_dict in content_invert_file[word]['docs']:
+                                #for doc, doc_tf in document_count_dict.items():
+                                        doc = document_count_dict
+                                        doc_tf = content_invert_file[word]['docs'][doc] 
+                                        #dl = doc_len_dic[id_url_dic[doc]]
+                                        dl = 1
+                                        if doc in document_scores_content:
+                                                #document_scores[doc] += query_tf * idf * doc_tf * idf
+                                                document_scores_content[doc] += math.log((N_content-idf+0.5)/(idf+0.5))*\
+                                                        (((k1+1)*doc_tf)/((k1*(1-b+b*(dl/doc_averge_len)))+doc_tf))*\
+                                                        (((k3+1)*query_tf)/(k3+query_tf))
+                                        else:
+                                                #document_scores[doc] = query_tf * idf * doc_tf * idf
+                                                document_scores_content[doc] = math.log((N_content-idf+0.5)/(idf+0.5))*\
+                                                        (((k1+1)*doc_tf)/((k1*(1-b+b*(dl/doc_averge_len)))+doc_tf))*\
+                                                        (((k3+1)*query_tf)/(k3+query_tf))
+                
+                if word in push_invert_file:
+                        query_tf = count
+                        idf = push_invert_file[word]['idf']
+                        idf = N_push/idf
+                        for document_count_dict in push_invert_file[word]['docs']:
+                                #for doc, doc_tf in document_count_dict.items():
+                                        doc = document_count_dict
+                                        doc_tf = push_invert_file[word]['docs'][doc] 
+                                        #dl = doc_len_dic[id_url_dic[doc]]
+                                        dl = 1
+                                        if doc in document_scores_push:
+                                                #document_scores[doc] += query_tf * idf * doc_tf * idf
+                                                document_scores_push[doc] += math.log((N_push-idf+0.5)/(idf+0.5))*\
+                                                        (((k1+1)*doc_tf)/((k1*(1-b+b*(dl/doc_averge_len)))+doc_tf))*\
+                                                        (((k3+1)*query_tf)/(k3+query_tf))
+                                        else:
+                                                #document_scores[doc] = query_tf * idf * doc_tf * idf
+                                                document_scores_push[doc] = math.log((N_push-idf+0.5)/(idf+0.5))*\
+                                                        (((k1+1)*doc_tf)/((k1*(1-b+b*(dl/doc_averge_len)))+doc_tf))*\
+                                                        (((k3+1)*query_tf)/(k3+query_tf))
 	
-	# sort the document score pair by the score
+        for doc in document_scores:
+            if doc in document_scores_content and doc in document_scores_push:
+                document_scores[doc] = document_scores[doc]*alpha + document_scores_content[doc]*beta + document_scores_push[doc]*gamma
+            elif doc in document_scores_content:
+                document_scores[doc] = document_scores[doc]*(alpha+gamma) + document_scores_content[doc]*beta
+            elif doc in document_scores_push:
+                document_scores[doc] = document_scores[doc]*(alpha+beta) + document_scores_push[doc]*gamma
+
+	# sort the document score pair by the scoreinverted_file_1500_title.json
         sorted_document_scores = sorted(document_scores.items(), key=operator.itemgetter(1), reverse=True)
         #feedback
         '''
