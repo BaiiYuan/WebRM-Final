@@ -123,11 +123,14 @@ for (query_id, query) in querys:
             doc = sorted_document_scores[i][0]
             res = requests.get(url_base+doc)
             soup = BeautifulSoup(res.text, 'html.parser')
-            main_content = soup.select('div#main-content.bbs-screen.bbs-content')[0].text.split("※ 發信站: 批踢踢實業坊(ptt.cc)")[0]
-            contents, link = get_content_from_main_content(main_content)
-            for content in contents:
-                doc_words = list(jieba.cut(content))
-                query_cnt.update(doc_words)
+            
+            main_content = soup.select('div#main-content.bbs-screen.bbs-content')
+            if main_content:
+                main_content = soup.select('div#main-content.bbs-screen.bbs-content')[0].text.split("※ 發信站: 批踢踢實業坊(ptt.cc)")[0]
+                contents, link = get_content_from_main_content(main_content)
+                for content in contents:
+                    doc_words = list(jieba.cut(content))
+                    query_cnt.update(doc_words)
 
         document_scores2 = dict()
         for (word, count) in query_cnt.items():
@@ -175,10 +178,11 @@ for (query_id, query) in querys:
             for url in doc:
                 if url_cnt > 20:
                     break
-                try:
-                    res = requests.get(url)
-                    soup = BeautifulSoup(res.text,'html.parser')
-                    main_content = soup.select('div#main-content.bbs-screen.bbs-content')[0].text.split("※ 發信站: 批踢踢實業坊(ptt.cc)")[0]
+                res = requests.get(url)
+                soup = BeautifulSoup(res.text,'html.parser')
+                main_content = soup.select('div#main-content.bbs-screen.bbs-content')
+                if main_content:
+                    main_content = main_content[0].text.split("※ 發信站: 批踢踢實業坊(ptt.cc)")[0]
                     content,pictures = get_content_from_main_content(main_content)
                     print (url,file=sys.stderr)
                     print ('<p><a href="'+url+'">'+url+'</a></p>')
@@ -189,9 +193,9 @@ for (query_id, query) in querys:
                             break
                         cnt += 1
                     url_cnt += 1
-                except:
-                    print('page not found',file=sys.stderr)
-                    pass
+                #except:
+                #    print('page not found',file=sys.stderr)
+                #    pass
         print ("</body>")
         print ("</html>")
 
