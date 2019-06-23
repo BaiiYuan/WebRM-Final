@@ -22,8 +22,8 @@ parser = ArgumentParser()
 parser.add_argument("-t", default='inverted_file_1500_title.json', dest = "title_inverted_file", help = "Pass in a .json file.")
 parser.add_argument("-c", default='inverted_file_1500_content.json', dest = "content_inverted_file", help = "Pass in a .json file.")
 parser.add_argument("-p", default='inverted_file_1500_upvote.json', dest = "push_inverted_file", help = "Pass in a .json file.")
-#parser.add_argument("-q", "--query_file", default='QS_1.csv', dest = "query_file", help = "Pass in a .csv file.")
-#parser.add_argument("-c", "--corpus_file", default='NC_1.csv', dest = "corpus_file", help = "Pass in a .csv file.")
+parser.add_argument("-a", default=0.85, dest = "alpha", help = "Pass in a value [0-1]")
+parser.add_argument("-b", default=0.1, dest = "beta", help = "Pass in a value < 1-alpha.")
 #parser.add_argument("-o", "--output_file", default='sample_output.csv', dest = "output_file", help = "Pass in a .csv file.")
 #parser.add_argument("-r", "--raw_file",default='url2content.json', dest = 'raw_file',help = "Pass in a .json file.")
 
@@ -39,6 +39,13 @@ with open(args.content_inverted_file) as f:
 	content_invert_file = json.load(f)
 with open(args.push_inverted_file) as f:
 	push_invert_file = json.load(f)
+
+
+alpha = args.alpha   #weight of title
+beta = args.beta #weight of content
+gamma = 1 - alpha - beta
+
+
 #load raw data
 #with open(args.raw_file) as f:
 #        raw_file = json.load(f)
@@ -102,9 +109,6 @@ querys = [('1',querys)]
 
 doc_averge_len = 1
 
-alpha = 0.85   #weight of title
-beta = 0.1 #weight of content
-gamma = 1 - alpha - beta
 
 
 # process each query
@@ -193,7 +197,7 @@ for (query_id, query) in querys:
             if doc in document_scores_content and doc in document_scores_push:
                 document_scores[doc] = document_scores[doc]*alpha + document_scores_content[doc]*beta + document_scores_push[doc]*gamma
             elif doc in document_scores_content:
-                document_scores[doc] = document_scores[doc]*(alpha+gamma) + document_scores_content[doc]*betar
+                document_scores[doc] = document_scores[doc]*(alpha+gamma) + document_scores_content[doc]*beta
             elif doc in document_scores_push:
                 document_scores[doc] = document_scores[doc]*(alpha+beta) + document_scores_push[doc]*gamma
 

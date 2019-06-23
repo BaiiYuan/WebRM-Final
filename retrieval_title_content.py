@@ -21,8 +21,8 @@ import webbrowser
 parser = ArgumentParser()
 parser.add_argument("-t", default='inverted_file_1500_title.json', dest = "title_inverted_file", help = "Pass in a .json file.")
 parser.add_argument("-c", default='inverted_file_1500_content.json', dest = "content_inverted_file", help = "Pass in a .json file.")
-#parser.add_argument("-q", "--query_file", default='QS_1.csv', dest = "query_file", help = "Pass in a .csv file.")
-#parser.add_argument("-c", "--corpus_file", default='NC_1.csv', dest = "corpus_file", help = "Pass in a .csv file.")
+parser.add_argument("-a", default=0.9, dest = "alpha", help = "Pass in a value [0-1]")
+#parser.add_argument("-b", default=, dest = "corpus_file", help = "Pass in a .csv file.")
 #parser.add_argument("-o", "--output_file", default='sample_output.csv', dest = "output_file", help = "Pass in a .csv file.")
 #parser.add_argument("-r", "--raw_file",default='url2content.json', dest = 'raw_file',help = "Pass in a .json file.")
 
@@ -36,7 +36,14 @@ with open(args.title_inverted_file) as f:
 	title_invert_file = json.load(f)
 with open(args.content_inverted_file) as f:
 	content_invert_file = json.load(f)
+
+
+alpha = args.alpha   #weight of title
+beta = 1 - alpha #weight of content
+
+
 #load raw data
+
 #with open(args.raw_file) as f:
 #        raw_file = json.load(f)
 '''
@@ -88,8 +95,6 @@ querys = [('1',querys)]
 
 doc_averge_len = 1
 
-alpha = 0.9   #weight of title
-beta = 1 - alpha #weight of content
 
 
 
